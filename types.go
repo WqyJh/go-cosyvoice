@@ -26,9 +26,9 @@ func (e Error) Error() string {
 type Format string
 
 const (
-	PCM Format = "pcm"
-	WAV Format = "wav"
-	MP3 Format = "mp3"
+	FormatPCM Format = "pcm"
+	FormatWAV Format = "wav"
+	FormatMP3 Format = "mp3"
 )
 
 type SampleRate int
