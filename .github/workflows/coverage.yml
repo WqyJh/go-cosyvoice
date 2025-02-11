@@ -24,8 +24,9 @@ jobs:
           version: latest
       - name: Run tests
         run: make cov
+        env:
+          COSYVOICE_API_KEY: ${{ secrets.COSYVOICE_API_KEY }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          COSYVOICE_API_KEY: ${{ secrets.COSYVOICE_API_KEY }}
