@@ -1,6 +1,6 @@
 module github.com/WqyJh/go-cosyvoice/examples
 
-go 1.23.4
+go 1.19
 
 require (
 	github.com/WqyJh/go-cosyvoice v0.0.0-20250211081817-45b3623a54c9
