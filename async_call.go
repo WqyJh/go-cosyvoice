@@ -42,6 +42,9 @@ func (s *AsyncSynthesizer) RunTask(ctx context.Context) (<-chan Result, error) {
 }
 
 func (s *AsyncSynthesizer) SendText(ctx context.Context, text string) error {
+	if s.taskID == "" {
+		return errors.New("task not running")
+	}
 	cmd, err := generateContinueTaskCmd(s.taskID, text)
 	if err != nil {
 		return err
@@ -56,6 +59,9 @@ func (s *AsyncSynthesizer) SendText(ctx context.Context, text string) error {
 }
 
 func (s *AsyncSynthesizer) FinishTask(ctx context.Context) error {
+	if s.taskID == "" {
+		return errors.New("task not running")
+	}
 	cmd, err := generateFinishTaskCmd(s.taskID)
 	if err != nil {
 		return err
