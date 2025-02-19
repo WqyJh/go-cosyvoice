@@ -7,6 +7,7 @@ import (
 
 type Header struct {
 	Action     Action                 `json:"action"`
+	TaskID     string                 `json:"task_id"`
 	Streaming  string                 `json:"streaming"`
 	Event      string                 `json:"event"`
 	Attributes map[string]interface{} `json:"attributes"`
@@ -14,13 +15,13 @@ type Header struct {
 }
 
 type Error struct {
-	TaskID  string `json:"task_id"`
-	Code    string `json:"error_code,omitempty"`
-	Message string `json:"error_message,omitempty"`
+	RequestID string `json:"request_id,omitempty"`
+	Code      string `json:"error_code,omitempty"`
+	Message   string `json:"error_message,omitempty"`
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("code: %s, message: %s", e.Code, e.Message)
+	return fmt.Sprintf("request_id: %s, code: %s, message: %s", e.RequestID, e.Code, e.Message)
 }
 
 type Format string

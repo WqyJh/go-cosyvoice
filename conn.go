@@ -104,6 +104,7 @@ func (c *wsConn) handleEvent(event Event) (bool, error) {
 		return true, nil
 
 	case "task-failed":
+		event.Header.Error.RequestID = event.Header.TaskID
 		return true, fmt.Errorf("received task-failed event: %w", event.Header.Error)
 	}
 	return false, nil
