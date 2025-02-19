@@ -7,7 +7,6 @@ import (
 
 type Header struct {
 	Action     Action                 `json:"action"`
-	TaskID     string                 `json:"task_id"`
 	Streaming  string                 `json:"streaming"`
 	Event      string                 `json:"event"`
 	Attributes map[string]interface{} `json:"attributes"`
@@ -15,6 +14,7 @@ type Header struct {
 }
 
 type Error struct {
+	TaskID  string `json:"task_id"`
 	Code    string `json:"error_code,omitempty"`
 	Message string `json:"error_message,omitempty"`
 }
