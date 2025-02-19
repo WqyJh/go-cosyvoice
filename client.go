@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	openairt "github.com/WqyJh/go-openai-realtime"
+	gorilla "github.com/WqyJh/go-openai-realtime/contrib/ws-gorilla"
 )
 
 type Client struct {
@@ -77,7 +78,7 @@ func (c *Client) AsyncSynthesizer(ctx context.Context, opts ...SynthesizerOption
 	option := synthesizerOption{
 		pingInterval:      45,
 		chanSize:          32,
-		dialer:            openairt.DefaultDialer(),
+		dialer:            gorilla.NewWebSocketDialer(gorilla.WebSocketOptions{}),
 		logger:            openairt.NopLogger{},
 		synthesizerConfig: DefaultSynthesizerConfig(),
 	}
@@ -102,7 +103,10 @@ func (c *Client) AsyncSynthesizer(ctx context.Context, opts ...SynthesizerOption
 		conn:         socketConn,
 		logger:       option.logger,
 		pingInterval: time.Duration(option.pingInterval) * time.Second,
+		ticker:       time.NewTicker(time.Duration(option.pingInterval) * time.Second),
 	}
+
+	go conn.handleHealthCheck()
 
 	asyncSynthesizer := AsyncSynthesizer{
 		conn:     conn,

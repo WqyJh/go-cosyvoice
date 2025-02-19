@@ -3,7 +3,7 @@ module github.com/WqyJh/go-cosyvoice/examples
 go 1.19
 
 require (
-	github.com/WqyJh/go-cosyvoice v0.0.0-20250211081817-45b3623a54c9
+	github.com/WqyJh/go-cosyvoice v0.1.0
 	github.com/WqyJh/go-openai-realtime v0.5.1-0.20250210083616-024eddd5a481
 	github.com/WqyJh/go-openai-realtime/contrib/ws-gorilla v0.0.0-20250210083616-024eddd5a481
 	github.com/WqyJh/go-openai-realtime/examples v0.0.0-20250210083616-024eddd5a481
@@ -23,4 +23,4 @@ require (
 	golang.org/x/sys v0.25.0 // indirect
 )
 
-// replace github.com/WqyJh/go-cosyvoice => ../
+replace github.com/WqyJh/go-cosyvoice => ../
