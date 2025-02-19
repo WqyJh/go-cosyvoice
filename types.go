@@ -11,7 +11,7 @@ type Header struct {
 	Streaming  string                 `json:"streaming"`
 	Event      string                 `json:"event"`
 	Attributes map[string]interface{} `json:"attributes"`
-	Error      Error                  `json:"error,omitempty"`
+	Error
 }
 
 type Error struct {

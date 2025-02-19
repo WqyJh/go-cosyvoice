@@ -12,18 +12,16 @@ import (
 )
 
 type wsConn struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	lock   sync.Mutex
-	conn   openairt.WebSocketConn
-	logger openairt.Logger
-
+	ctx          context.Context
+	cancel       context.CancelFunc
+	conn         openairt.WebSocketConn
+	logger       openairt.Logger
 	pingInterval time.Duration
 	ticker       *time.Ticker
 
+	lock        sync.Mutex
+	wg          sync.WaitGroup
 	sendBarrier chan struct{}
-
-	wg sync.WaitGroup
 }
 
 type Task struct {
@@ -37,9 +35,9 @@ func (c *wsConn) sendRunTaskCmd(ctx context.Context, taskID string, voiceConfig 
 	}
 
 	c.lock.Lock()
-	defer c.lock.Unlock()
-
 	err = c.conn.WriteMessage(ctx, openairt.MessageText, []byte(runTaskCmd))
+	c.lock.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -128,11 +126,10 @@ func (c *wsConn) handleHealthCheck() {
 
 		case <-c.ticker.C:
 			c.lock.Lock()
-
 			err := c.conn.Ping(c.ctx)
-			c.ticker.Reset(c.pingInterval)
-
 			c.lock.Unlock()
+
+			c.ticker.Reset(c.pingInterval)
 
 			if err != nil {
 				c.logger.Errorf("ping err: %v", err)
@@ -166,11 +163,10 @@ func (c *wsConn) sendMessage(sendCh <-chan Task) {
 			}
 
 			c.lock.Lock()
-
 			err := c.conn.WriteMessage(c.ctx, openairt.MessageText, []byte(task.data))
-			c.ticker.Reset(c.pingInterval)
-
 			c.lock.Unlock()
+
+			c.ticker.Reset(c.pingInterval)
 
 			if err != nil {
 				var permanent *openairt.PermanentError

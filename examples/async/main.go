@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
 	"github.com/WqyJh/go-cosyvoice"
 	openairt "github.com/WqyJh/go-openai-realtime"
@@ -70,8 +69,6 @@ func main() {
 
 	texts := []string{"你好，今天的天气怎么样?", "武汉今天多云转晴。"}
 	OnceCall(synthesizer, ctx, texts, streamers)
-
-	time.Sleep(61 * time.Second)
 
 	texts1 := []string{"出去散散步，", "挺不错的。"}
 	OnceCall(synthesizer, ctx, texts1, streamers)
