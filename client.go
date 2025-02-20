@@ -95,16 +95,12 @@ func (c *Client) AsyncSynthesizer(ctx context.Context, opts ...SynthesizerOption
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-
-	conn := &wsConn{
-		ctx:          ctx,
-		cancel:       cancel,
-		conn:         socketConn,
-		logger:       option.logger,
-		pingInterval: time.Duration(option.pingInterval) * time.Second,
-		ticker:       time.NewTicker(time.Duration(option.pingInterval) * time.Second),
-	}
+	conn := newWsConn(
+		ctx,
+		socketConn,
+		option.logger,
+		time.Duration(option.pingInterval)*time.Second,
+	)
 
 	go conn.handleHealthCheck()
 

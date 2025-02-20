@@ -17,11 +17,24 @@ type wsConn struct {
 	conn         openairt.WebSocketConn
 	logger       openairt.Logger
 	pingInterval time.Duration
-	ticker       *time.Ticker
 
+	ticker      *time.Ticker
 	lock        sync.Mutex
 	wg          sync.WaitGroup
 	sendBarrier chan struct{}
+}
+
+func newWsConn(ctx context.Context, conn openairt.WebSocketConn, logger openairt.Logger, pingInterval time.Duration) *wsConn {
+	ctx, cancel := context.WithCancel(ctx)
+	return &wsConn{
+		ctx:          ctx,
+		cancel:       cancel,
+		conn:         conn,
+		logger:       logger,
+		pingInterval: pingInterval,
+
+		ticker: time.NewTicker(pingInterval),
+	}
 }
 
 type Task struct {
