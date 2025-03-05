@@ -138,3 +138,9 @@ func main() {
 	)
 }
 ```
+
+# ADDATIONS
+### The conditions for WebSocket disconnection
+1. If task execution fails, the server sends the task-failed event and closes the websocketConnection. 
+2. If the interval between two tasks exceeds 60 seconds, the connection will be disconnected due to timeout. In this package, after the Asynthesizer/Synthesizer object is created, a goroutine is started for health detection by send pingMessage. Developers don't need to worry about this condition. 
+3. In task, if the interval between two commands exceeds 23S, the server triggers a timeout error and disconnects. When you use Asyncthesizer, if your business is likely to exceed 23S, periodically call SendText() to send empty characters or punctuation marks to prevent the connection breaking. Synthesizer is not needed.

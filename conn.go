@@ -18,9 +18,23 @@ type wsConn struct {
 	logger       openairt.Logger
 	pingInterval time.Duration
 
+	ticker      *time.Ticker
+	lock        sync.Mutex
+	wg          sync.WaitGroup
 	sendBarrier chan struct{}
+}
 
-	wg sync.WaitGroup
+func newWsConn(ctx context.Context, conn openairt.WebSocketConn, logger openairt.Logger, pingInterval time.Duration) *wsConn {
+	ctx, cancel := context.WithCancel(ctx)
+	return &wsConn{
+		ctx:          ctx,
+		cancel:       cancel,
+		conn:         conn,
+		logger:       logger,
+		pingInterval: pingInterval,
+
+		ticker: time.NewTicker(pingInterval),
+	}
 }
 
 type Task struct {
@@ -33,7 +47,10 @@ func (c *wsConn) sendRunTaskCmd(ctx context.Context, taskID string, voiceConfig 
 		return err
 	}
 
+	c.lock.Lock()
 	err = c.conn.WriteMessage(ctx, openairt.MessageText, []byte(runTaskCmd))
+	c.lock.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -100,6 +117,7 @@ func (c *wsConn) handleEvent(event Event) (bool, error) {
 		return true, nil
 
 	case "task-failed":
+		event.Header.Error.RequestID = event.Header.TaskID
 		return true, fmt.Errorf("received task-failed event: %w", event.Header.Error)
 	}
 	return false, nil
@@ -113,11 +131,32 @@ func (c *wsConn) Start(inputCh <-chan Task, outputCh chan<- Result) {
 	go c.handleReceiveMessage(outputCh)
 }
 
+func (c *wsConn) handleHealthCheck() {
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.logger.Infof("handleHealthCheck stopped: %v", c.ctx.Err())
+			return
+
+		case <-c.ticker.C:
+			c.lock.Lock()
+			err := c.conn.Ping(c.ctx)
+			c.lock.Unlock()
+
+			c.ticker.Reset(c.pingInterval)
+
+			if err != nil {
+				c.logger.Errorf("ping err: %v", err)
+			} else {
+				c.logger.Debugf("ping success")
+			}
+
+		}
+	}
+}
+
 func (c *wsConn) sendMessage(sendCh <-chan Task) {
 	defer c.wg.Done()
-
-	ticker := time.NewTicker(c.pingInterval)
-	defer ticker.Stop()
 
 	select {
 	case <-c.ctx.Done():
@@ -132,21 +171,17 @@ func (c *wsConn) sendMessage(sendCh <-chan Task) {
 			c.logger.Infof("sendMessage stopped: %v", c.ctx.Err())
 			return
 
-		case <-ticker.C:
-			err := c.conn.Ping(c.ctx)
-			if err != nil {
-				c.logger.Errorf("ping err: %v", err)
-			} else {
-				c.logger.Debugf("ping success")
-			}
-
-			ticker.Reset(c.pingInterval)
-
 		case task, ok := <-sendCh:
 			if !ok {
 				return
 			}
+
+			c.lock.Lock()
 			err := c.conn.WriteMessage(c.ctx, openairt.MessageText, []byte(task.data))
+			c.lock.Unlock()
+
+			c.ticker.Reset(c.pingInterval)
+
 			if err != nil {
 				var permanent *openairt.PermanentError
 				if errors.As(err, &permanent) {
@@ -158,13 +193,13 @@ func (c *wsConn) sendMessage(sendCh <-chan Task) {
 			}
 			c.logger.Debugf("send message success: %s", task.data)
 
-			ticker.Reset(c.pingInterval)
 		}
 	}
 }
 
 func (c *wsConn) Close() error {
 	c.cancel()
+	c.ticker.Stop()
 	return c.conn.Close()
 }
 
